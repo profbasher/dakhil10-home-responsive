@@ -7,40 +7,69 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @media print {
-        /* existing hidden elements */
-        th:last-child,
-        td:last-child,
+        /* Hide form and unnecessary controls */
         form,
         #search,
-        #printBtn {
+        #printBtn,
+        th:last-child,
+        td:last-child {
           display: none !important;
         }
 
+        /* Remove background and make table elements print-friendly */
         body {
           background: white;
         }
 
-        /* Disable table scroll on print */
+        .rounded,
+        .rounded-sm,
+        .rounded-md,
+        .rounded-lg,
+        .rounded-xl,
+        .rounded-2xl,
+        .rounded-3xl,
+        .rounded-full {
+          border-radius: 0 !important;
+        }
+
+        .shadow,
+        .shadow-sm,
+        .shadow-md,
+        .shadow-lg,
+        .shadow-xl,
+        .shadow-2xl,
+        .drop-shadow,
+        .drop-shadow-sm,
+        .drop-shadow-md,
+        .drop-shadow-lg {
+          box-shadow: none !important;
+        }
+
+        /* Disable overflow clipping */
+        .overflow-x-auto,
+        .overflow-y-auto,
         .max-h-\[400px\] {
-          max-height: none !important;
           overflow: visible !important;
+          max-height: none !important;
         }
 
-        .overflow-y-auto {
-          overflow-y: visible !important;
+        /* Remove sticky header shadow */
+        thead {
+          box-shadow: none !important;
         }
 
-        .overflow-x-auto {
-          overflow-x: visible !important;
+        .bg-gray-200 {
+          background-color: white !important;
         }
       }
     </style>
   </head>
   <body class="bg-gray-100 p-4 sm:p-6">
     <div class="max-w-7xl mx-auto">
-      <h1 class="text-2xl sm:text-3xl font-bold mb-4 text-center">
-        Dakhil 10 2025
+      <h1 class="text-2xl sm:text-3xl font-medium mb-4 text-center">
+        MORDANGA SEKENDARIA FAZIL MADRASAH
       </h1>
+      <p class="font-medium text-gray-500 uppercase mb-4 text-center">Result of Dakhil-10 Pretest, 2025</p>
 
       <!-- Form -->
       <form
@@ -243,7 +272,9 @@
       />
 
       <!-- Table -->
-      <div class="bg-white rounded shadow overflow-x-auto">
+      <div
+        class="bg-white rounded shadow overflow-x-auto"
+      >
         <div class="max-h-[400px] overflow-y-auto relative">
           <table class="min-w-[900px] w-full text-sm text-left">
             <thead
@@ -417,9 +448,11 @@
               if (merit === 1) {
                 meritClass = "text-center font-bold text-red-700 bg-yellow-100";
               } else if (merit === 2) {
-                meritClass = "text-center font-bold text-blue-700 bg-yellow-100";
+                meritClass =
+                  "text-center font-bold text-blue-700 bg-yellow-100";
               } else if (merit === 3) {
-                meritClass = "text-center font-bold text-purple-700 bg-yellow-100";
+                meritClass =
+                  "text-center font-bold text-purple-700 bg-yellow-100";
               } else {
                 meritClass = "bg-yellow-100 text-center font-bold text-sm";
               }
