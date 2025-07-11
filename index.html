@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Results App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+  @media print {
+    th:last-child,
+    td:last-child {
+      display: none;
+    }
+
+    /* Optional: Hide form, search box, and buttons */
+    form,
+    #search,
+    #printBtn {
+      display: none !important;
+    }
+
+    body {
+      background: white;
+    }
+  }
+</style>
+
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Student Results</h1>
+    <form id="entryForm" class="bg-white p-6 rounded shadow mb-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <input name="s_name" placeholder="Name" class="p-2 border rounded"/>
+        <input name="roll" placeholder="Roll (unique)" class="p-2 border rounded"/>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <input name="kuran_tajvid" placeholder="Kuran&Tajvid" type="number" step="any" class="p-2 border rounded"/>
+        <input name="akaid_fikah" placeholder="Akaid&Fikah" type="number" step="any" class="p-2 border rounded"/>
+        <input name="hadis" placeholder="Hadis" type="number" step="any" class="p-2 border rounded"/>
+
+        <input name="arabic1" placeholder="Arabic1" type="number" step="any" class="p-2 border rounded"/>
+        <input name="arabic2" placeholder="Arabic2" type="number" step="any" class="p-2 border rounded"/>
+        <input name="gmath" placeholder="GMath" type="number" step="any" class="p-2 border rounded"/>
+
+        <input name="english1" placeholder="English1" type="number" step="any" class="p-2 border rounded"/>
+        <input name="english2" placeholder="English2" type="number" step="any" class="p-2 border rounded"/>
+        <input name="bengali1" placeholder="Bengali1" type="number" step="any" class="p-2 border rounded"/>
+
+        <input name="bengali2" placeholder="Bengali2" type="number" step="any" class="p-2 border rounded"/>
+        <input name="ishistory_physics" placeholder="Islamic History / Physics" type="number" step="any" class="p-2 border rounded"/>
+        <input name="phedu_bio" placeholder="PE / Biology" type="number" step="any" class="p-2 border rounded"/>
+
+        <input name="chemistry_ict" placeholder="Chemistry/ICT" type="number" step="any" class="p-2 border rounded"/>
+        <input name="ag_hmath" placeholder="Ag / HMath" type="number" step="any" class="p-2 border rounded"/>
+      </div>
+
+      <div class="flex space-x-4">
+        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Save / Update</button>
+        <button type="button" id="clearBtn" class="px-4 py-2 bg-gray-300 rounded">Clear</button>
+        <button type="button" id="printBtn" class="px-4 py-2 bg-green-500 text-white rounded">Print</button>
+      </div>
+    </form>
+
+    <input id="search" placeholder="Search by roll or name" class="p-2 border rounded mb-4 w-full"/>
+
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-200">
+          <tr>
+            <th>Roll</th><th>Name</th><th>Total</th><th>Pass/Fail</th>
+            <th>Kuran</th><th>Akaid</th><th>Hadis</th><th>Ar1</th><th>Ar2</th><th>GMath</th>
+            <th>Eng1</th><th>Eng2</th><th>Ben1</th><th>Ben2</th>
+            <th>Hist/Phys</th><th>PE/Bio</th><th>Chem/ICT</th><th>Ag/Math</th>
+            <th>CGPA</th><th>Grade</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyDSiPMPo-dtSpuh5Fii9PYFsI1wqJPOFcA_EvH3BN6a56KF_ERmx0Tr6lTBwGFkaPH/exec'; // replace with your Apps Script web app URL
+    let allData = [], editingRoll = null;
+
+    async function fetchAll(){
+      const res = await fetch(SCRIPT_URL);
+      allData = await res.json();
+      renderTable(allData);
+    }
+
+    function gradeFromMarks(m) {
+      if(m>=80) return {point:5.00,grade:'A+'};
+      if(m>=70) return {point:4.00,grade:'A'};
+      if(m>=60) return {point:3.50,grade:'A−'};
+      if(m>=50) return {point:3.00,grade:'B'};
+      if(m>=40) return {point:2.00,grade:'C'};
+      if(m>=33) return {point:1.00,grade:'D'};
+      return {point:0.00,grade:'F'};
+    }
+
+    function calcFields(obj){
+      const keys = ['kuran_tajvid','akaid_fikah','hadis','arabic1','arabic2','gmath','english1','english2','bengali1','bengali2','ishistory_physics','phedu_bio','chemistry_ict','ag_hmath'];
+      let total = 0, pass = true, count = 0;
+
+      keys.forEach(k => {
+        const v = parseFloat(obj[k]) || 0;
+        total += v;
+        if (v < 33) pass = false;
+        count++;
+      });
+
+      let cgpa = '';
+      let grade = 'F';
+      if (pass) {
+        const avg = total / count;
+        cgpa = (avg / 20).toFixed(2); // assuming CGPA out of 5
+        const gr = gradeFromMarks(avg); // get grade from average marks
+        grade = gr.grade;
+      } else {
+        cgpa = '0.00';
+      }
+
+      return {
+        total,
+        pass_fail: pass ? 'Pass' : 'Fail',
+        cgpa,
+        grade
+      };
+    }
+
+    document.getElementById('entryForm').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = {};
+      for(let [k,v] of fd.entries()) data[k]=v;
+      Object.assign(data, calcFields(data));
+
+      const action = editingRoll ? 'update' : 'create';
+      const res = await fetch(SCRIPT_URL+'?action='+action,{
+        method:'POST',
+        body: JSON.stringify(data),
+      });
+      const rj = await res.json();
+      if(rj.status==='error') return alert(rj.message);
+      editingRoll = null;
+      e.target.reset();
+      fetchAll();
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', ()=>{
+      editingRoll = null;
+      document.getElementById('entryForm').reset();
+    });
+
+    function renderTable(data){
+      const tb = document.getElementById('tblBody');
+      const filter = document.getElementById('search').value.toLowerCase();
+      tb.innerHTML = '';
+      data
+        .filter(r => r.roll.toString().includes(filter) || r.s_name.toLowerCase().includes(filter))
+        .sort((a, b) => parseInt(a.roll) - parseInt(b.roll)) // ✅ Sort rolls numerically
+        .forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.roll}</td>
+          <td>${r.s_name}</td>
+          <td>${r.total}</td>
+          <td>${r.pass_fail}</td>
+          <td>${r.kuran_tajvid}</td><td>${r.akaid_fikah}</td><td>${r.hadis}</td>
+          <td>${r.arabic1}</td><td>${r.arabic2}</td><td>${r.gmath}</td>
+          <td>${r.english1}</td><td>${r.english2}</td><td>${r.bengali1}</td><td>${r.bengali2}</td>
+          <td>${r.ishistory_physics}</td><td>${r.phedu_bio}</td><td>${r.chemistry_ict}</td><td>${r.ag_hmath}</td>
+          <td>${r.cgpa}</td><td>${r.grade}</td>
+          <td>
+            <button data-roll="${r.roll}" class="editBtn text-blue-600">Edit</button>
+            <button data-roll="${r.roll}" class="delBtn text-red-600">Delete</button>
+          </td>`;
+        tb.appendChild(tr);
+      });
+      // add events
+      document.querySelectorAll('.editBtn').forEach(b=>b.onclick = e=>{
+        const roll = e.target.dataset.roll;
+        const row = allData.find(x=>x.roll==roll);
+        editingRoll = roll;
+        for(let k in row) if(document.querySelector(`[name=${k}]`)) document.querySelector(`[name=${k}]`).value = row[k];
+      });
+      document.querySelectorAll('.delBtn').forEach(b=>b.onclick = async e=>{
+        if(!confirm('Delete this record?')) return;
+        const roll = e.target.dataset.roll;
+        await fetch(SCRIPT_URL+'?action=delete',{
+          method:'POST',
+          body: JSON.stringify({roll})
+        });
+        fetchAll();
+      });
+    }
+
+    document.getElementById('search').addEventListener('input', ()=>renderTable(allData));
+    document.getElementById('printBtn').addEventListener('click', ()=>{
+      window.print();
+    });
+
+    fetchAll();
+  </script>
+</body>
+</html>
